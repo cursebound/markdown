@@ -95,9 +95,16 @@
       
       saveButton.addEventListener('click', () => {
         const markdown = editor.value;
-        // Replace with your own save function
-        alert(`Markdown saved:\n${markdown}`);
+        localStorage.setItem('markdown', markdown);
+        alert('Markdown saved.');
       });
+      
+      // Load saved Markdown content from Local Storage
+      const savedMarkdown = localStorage.getItem('markdown');
+      if (savedMarkdown) {
+        editor.value = savedMarkdown;
+        updatePreview();
+      }
     </script>
   </body>
 </html>
