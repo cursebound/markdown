@@ -1,0 +1,151 @@
+<%- include("partials/header")  %>
+
+<div class="container">
+            <div class="row">
+                <div class="col">
+                    <!-- this todo is obtained from index.js which in turn got from the 'get' route of view.routes.js -->
+                    <% if(todo) {%>
+                        <h1>
+                            <%= todo.title  %>
+                        </h1>
+                        <p class="todo-description p-2 bg-secondaryy">
+                            <%= todo.description %>
+                        </p>
+                        <h1 class="edit-h1 pt-3 mt-4">&#x270E; Modify your todo</h1>
+                        <div class="div">
+                            <form id="todoUpdateForm">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Enter Title</label>
+                                    <input type="text" class="form-control bg-dark text-white" id="title" readonly required value="<%=todo.title%>">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Enter Description</label>
+                                    <textarea class="form-control bg-dark text-white" id="description" rows="3"
+                                        required><%=todo.description%></textarea>
+                                </div>
+                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="completed" id="completedDone" <%= todo.completed ? "checked" : "" %>/>
+                                    <label class="form-check-label" for="completedDone">
+                                        Mark Done
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="completed" id="completedNotDone" <%= todo.completed ? "" : "checked" %> />
+                                    <label class="form-check-label" for="completedFalse">
+                                        Not Done
+                                    </label>
+                                </div>
+                                <div class="texts-center mt-4">
+                                    <input class="btn btn-primary" type="submit" value="Update" />
+                                    <button type="button" onclick="deleteTodo(`<%=todo.title%>`)" class="btn btn-danger">Delete</button>
+                                </div>
+                            </form>
+                        </div>                
+                        <% } else { %>
+                            <h1>Not found</h1>
+                            <a href="/todos/add" class="my-1 btn btn-primary">Try adding a new todo...</a>
+                        <% } %>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.getElementById("todoUpdateForm").addEventListener("submit", function(event){
+                event.preventDefault()
+                console.log("submittig");
+
+                const title = document.getElementById("title").value
+                const description = document.getElementById("description").value
+                const completedDone = document.getElementById("completedDone")
+
+                // for protected route purpose:
+                let token = localStorage.getItem("access_token")
+
+                // console.log("checkbox is ", completedDone.checked);
+                // console.log("checkbox is ", title.value);
+                const body = {
+                    title,
+                    description,
+                    completed: completedDone.checked ? true : false 
+                }
+
+                // fetch(`http://localhost:3000/api/todos/${title}`, {
+                fetch(`/api/todos/${title}`, {
+                    method: "PUT",
+                    // without header the request payload will be [object Object]
+                    headers: {
+                        "Accept" : "application/json",
+                        "Content-type": "application/json",
+                        // sending a custom key value in the headers to check it via the middleware isAuthenticated
+                        // Authorization = authorization... it is lower cased internally
+                        "Authorization": token
+                    },
+                    body: JSON.stringify(body)
+                })
+                // fetch is a promise so need to resolve it
+                // .then((response)=>{
+                //     // console.log("PUT Response = ", response.status);
+                //     // alert(response.body)
+                //     response.json()
+                // })
+                .then((response) => {
+                    console.log("---Token respone---", token, response.status);
+
+                    return response.json()
+                    .then((data) => {
+                        if(data.redirect){
+                            alert("You are not logged in. So redirecting you to the login page")
+                            window.location.href = "/auth/login"
+                            return
+                        }
+                        if(data.error){
+                            const errorString = JSON.stringify(daa.error)
+                        }
+                        // successful update
+                        else{
+                            alert(data.message)
+
+                            // to reload the page to show the changes made on update as this is not react app
+                            location.reload()
+                        }
+                    })
+                })
+                // .then((response) => response.json())
+                // .then((data) => alert(data.message))
+                .catch((error)=> alert(error.toString()))
+            })
+
+            function deleteTodo(todo_title){
+                console.log("You gonna delete me ? :( ", todo_title);
+
+                let token = localStorage.getItem("access_token")
+
+                fetch(`/api/todos/${todo_title}`, {
+                    method: "DELETE",
+                    headers: {
+                        "authorization": token
+                    }
+                })
+                .then((response) => {
+                    return response.json()
+                    .then((data) => {
+
+                        // if for some reason the user deletes localStorage variable and is on the todo page with access to delete button
+                        if(data.redirect){
+                            alert("You are not logged in. So redirecting you to the login page")
+                            window.location.href = "/auth/login"
+                            return
+                        }
+
+                        // console.log("Delete msg : ", JSON.stringify(data));
+                        alert(data.message)
+
+                        // taking the user back to the home page so that he cannot update the deleted data as on web page the data still persists and doest change due to not being a react app
+                        window.location.href = "/"
+                    })
+                })
+                .catch((error)=> alert(error.toString()))
+            }
+        </script>
+<%- include("partials/footer")  %>

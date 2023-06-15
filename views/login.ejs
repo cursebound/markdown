@@ -1,0 +1,72 @@
+<%- include("partials/header") %>
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Login yourself</h1>
+                <div class="div">
+                    <form id="loginSubmitForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Enter email</label>
+                            <input type="email" class="form-control bg-dark text-white" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Enter password</label>
+                            <input type="password" class="form-control bg-dark text-white" id="password" required>
+                        </div>
+                        
+                        <input class="btn btn-primary btn-lg d-block mb-3" type="submit" value="Login" />
+                        <a href="/auth/register">Register ?</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+            document.getElementById("loginSubmitForm").addEventListener("submit", function(event){
+                event.preventDefault()
+                console.log("submittig");
+
+                const email = document.getElementById("email").value
+                const password = document.getElementById("password").value
+
+                const body = {
+                    email,
+                    password
+                }
+
+                // fetch(`http://localhost:3000/api/v1/auth`, {
+                fetch(`/api/v1/auth/login`, {
+                    method: "POST",
+                    // without header the request payload will be [object Object]
+                    headers: {
+                        "Accept" : "application/json",
+                        "Content-type": "application/json"
+                    },
+                    body: JSON.stringify(body)
+                })
+                // fetch is a promise so need to resolve it
+                .then((response) => response.json())
+                .then((data) => {
+                    if(data.error){
+                        const errorString = JSON.stringify(data.error)
+                        alert(errorString)
+                    }
+                    else{
+                        alert(data.message)
+                        
+                        // --- for protected routes purpose
+                        localStorage.setItem("access_token", data.data.access_token)
+                        localStorage.setItem("username", data.data.user)
+                        
+                        document.getElementById("logout").classList.remove("d-none")
+                        window.location.href = "/"
+                    }
+                })
+                .catch((error)=> alert(error.toString()))
+                
+
+            })
+        </script>
+    <%- include("partials/footer") %>
